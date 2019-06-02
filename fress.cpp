@@ -206,7 +206,7 @@ void Protein::regrowth_end(int l ){
 
             // Лучше потом переделать функцию для энергии
             C_t.emplace_back(map_of_contacts[map_coordinate_to_int[C_t.back()]][i]);
-            temp_e = count_contacts_breaked(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
+            temp_e = count_contacts_partied_t(seq_t, C_t, map_of_contacts,map_coordinate_to_int,  sequence.size()-l,current_energy);
             energies[i] = temp_e;
             probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
 
@@ -263,7 +263,7 @@ void Protein::regrowth_end(int l ){
             if(std::find(C_t.begin(), C_t.end(), map_of_contacts[map_coordinate_to_int[C_t.back()]][i])==C_t.end() ){
 
                 C_t.emplace_back(map_of_contacts[map_coordinate_to_int[C_t.back()]][i]);
-                temp_e = count_contacts_breaked(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
+                temp_e = count_contacts_partied_t(seq_t, C_t, map_of_contacts,map_coordinate_to_int, t, current_energy);
                 energies[i] = temp_e;
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
 
@@ -428,7 +428,7 @@ void Protein::regrowth_start(int l ) {
             // Лучше потом переделать функцию для энергии
             C_t.insert(C_t.begin(),map_of_contacts[map_coordinate_to_int[C_t[0]]][i]  );
 
-            temp_e = count_contacts_breaked(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
+            temp_e = count_contacts_partied_t(seq_t, C_t, map_of_contacts,map_coordinate_to_int, 0, current_energy);
             energies[i] = temp_e;
             probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
 
@@ -495,7 +495,7 @@ void Protein::regrowth_start(int l ) {
 
                 C_t.insert(C_t.begin(),map_of_contacts[map_coordinate_to_int[C_t[0]]][i]  );
 
-                temp_e = count_contacts_breaked(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
+                temp_e = count_contacts_partied_t(seq_t, C_t, map_of_contacts,map_coordinate_to_int, 0,current_energy);
                 energies[i] = temp_e;
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
 
@@ -678,7 +678,7 @@ void Protein::regrowth_middle(int l, int start_position){
             C_t.insert(C_t.begin()+start_position,map_of_contacts[map_coordinate_to_int[C_t[start_position-1]]][i]  );
 
             //temp_e = count_contacts_breaked(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
-            energies[i] =  temp_e = count_contacts_partied_t(seq_t, C_t, map_of_contacts,map_coordinate_to_int, start_position, current_energy);
+            energies[i] =  count_contacts_partied_t(seq_t, C_t, map_of_contacts,map_coordinate_to_int, start_position, current_energy);
 
              probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
 
@@ -929,8 +929,8 @@ void Protein::find_minimum() {
         if(iteration%10000==0){
             std::cout << "Number of attempts :  " << iteration<< std::endl;
         }
-        if(min_E==-36){
-            std::cout << "-36 achieved! " << std:: endl;
+        if(min_E==-9){
+            std::cout << "-9 achieved! " << std:: endl;
             break;
         }
 
@@ -942,27 +942,53 @@ void Protein::find_minimum() {
 };
 
 
-int Protein::count_contacts_partied_t( std::vector <int> &sequence, std::vector <std::pair <int, int>> &conformation, std:: map <int, std::vector < std::pair <int, int> >> &map_of_contacts, std:: map <std::pair<int, int>, int> &map_coordinate_to_int, int t, int current_energy    ){
+int Protein::count_contacts_partied_t( std::vector <int> &sequence, std::vector <std::pair <int, int>> &conformation, std:: map <int, std::vector < std::pair <int, int> >> &map_of_contacts, std:: map <std::pair<int, int>, int> &map_coordinate_to_int, int t, int current_energy    ) {
 
 
     int new_energy = current_energy;
     int position;
-    for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[t]]]){
 
-        if (step != conformation[t - 1] && step != conformation[t + 1] &&
-            std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
+    if(t!=0 && t!=sequence.size()-1){
+        for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[t]]]) {
 
-            position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-            new_energy = new_energy + sequence[t] * sequence[position];
+            if (step != conformation[t - 1] && step != conformation[t + 1] &&
+                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
+
+                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
+                new_energy = new_energy - sequence[t] * sequence[position];
+            }
+
+
         }
 
+    }
+    else if(t==0){
+        for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[0]]]) {
+
+            if (  step != conformation[  1] &&
+                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
+
+                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
+                new_energy = new_energy - sequence[0] * sequence[position];
+            }
 
 
+        }
+    }
+    else{
+        for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[t]]]) {
+
+            if (step != conformation[conformation.size()-2]  &&
+                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
+
+                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
+                new_energy = new_energy - sequence[t] * sequence[position];
+            }
+
+
+        }
 
     }
-
-
-
 
 
     return new_energy ;

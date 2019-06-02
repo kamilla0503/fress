@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
     std::ifstream in(filename);
     vector <int> sequence;
     getline(in, hp_sequence);
+    cout << hp_sequence<< endl;
     for (char c: hp_sequence){
         if(c=='H'){
             sequence.push_back(1);
