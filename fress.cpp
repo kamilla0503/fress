@@ -79,8 +79,6 @@ Protein::Protein(std::vector<int> sequence_input ) {
     T=3.5;
     change_T=false;
     calculate_probabilities_for_l();
-   // int length = sequence.size();
-   // int lattice_size = (length+2)*(length+2);
    lattice.create_lattice(sequence.size());
 // push_back or emplace_back?
     conformation.emplace_back(std::make_pair(0, 0));
@@ -172,7 +170,7 @@ void Protein::regrowth_end(int l ){
     std::copy(sequence.begin(), sequence.begin()+sequence.size()-l, seq_t.begin());
     int current_energy = dissected(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int);
     int temp_e;
-    static std::vector <std::pair<float, int>> probabilities_to_move;
+    static std::vector<std::pair<float, int>> probabilities_to_move;
     probabilities_to_move.resize(4, std::make_pair(0.0, 0));
     std::vector<int> energies;
     energies.resize(lattice.ndim2(), 0);
@@ -236,7 +234,6 @@ void Protein::regrowth_end(int l ){
                 energies[i] = temp_e;
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
                 C_t.pop_back();
-
             }
             else {
                 //точка не подходит
@@ -305,6 +302,7 @@ void Protein::regrowth_end(int l ){
         return ;
     }
 }
+
 void Protein::regrowth_start(int l ) {
     Conformation_t  C_t ;
     Sequence_t seq_t;

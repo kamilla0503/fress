@@ -15,7 +15,7 @@
 #include <map>
 #include <math.h>
 
-typedef std::vector <int> Sequence_t, Sequence;
+typedef std::vector<int> Sequence_t, Sequence;
 typedef std::pair<int, int> coord_t;
 typedef std::vector<coord_t> Conformation_t, Conformation;
 typedef std::map<int, std::vector<coord_t>>  contact_map_t ;
@@ -27,7 +27,7 @@ public:
     int ndim2() {return 4;}
     int lattice_side;
     contact_map_t map_of_contacts;
-    std:: map <int, std::pair<int, int>> map_int_to_coordinate;
+    std:: map<int, std::pair<int, int>> map_int_to_coordinate;
     Map_coordinate_to_int map_coordinate_to_int; //словарь для хранения всех соседей
 
     Lattice();
@@ -46,10 +46,10 @@ public:
     float T; //температура
     bool change_T; //чтобы корректно менять температуру каждый 50 000 шагов
     long int iterator; //для подсчета числа шагов
-    std::vector <double>  probabilities={}; //вектор вероятностей для выбора длины, вероятность пропорциональна 1/l
+    std::vector<double> probabilities={}; //вектор вероятностей для выбора длины, вероятность пропорциональна 1/l
     Conformation conformation;
     std::vector<int> conformation_int;
-    std:: vector <Conformation> results;
+    std::vector<Conformation> results;
     Lattice lattice;
 
     Protein();
