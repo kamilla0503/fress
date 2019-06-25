@@ -16,8 +16,6 @@ Protein::Protein(std::vector<int> sequence_input ) {
     int length = sequence.size();
     int lattice_size = (length+2)*(length+2);
     int l_s = length+2; //чтобы было точно достатчно места при граничных условия для тора
-
-
     //создается словарь, в котором ключ - номер точки на квардатной решетке
     // значения - координаты четырех соседних точек
     // создается пока неэффективным и некрасивым путем, но эта генерация происходит только один раз
@@ -317,11 +315,10 @@ void Protein::regrowth_end(int l ){
 
     }
 
-
-// дополнительная проверка, что раз мы дошли до этой части, участой нужной длины достроен
+// дополнительная проверка, что раз мы дошли до этой части, участок нужной длины достроен
 // по сути не нужно проверять, но мне так спокойнее
     if( C_t.size()==sequence.size()  ){
-
+        current_energy = count_contacts_breaked(sequence, C_t, map_of_contacts, map_coordinate_to_int);
 
         q =distribution(generator);
 
@@ -354,15 +351,10 @@ void Protein::regrowth_end(int l ){
 
                     out << c.first << " " << c.second << "   ";
 
-
                     out << std::endl;
-
 
                 }
                 out.close();
-
-
-
 
             }
             if (E==min_E){
@@ -500,9 +492,6 @@ void Protein::regrowth_start(int l ) {
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
 
                 C_t.erase(C_t.begin());
-
-
-
             }
             else {
                 //точка не подходит
@@ -558,6 +547,7 @@ void Protein::regrowth_start(int l ) {
 
 
     if( C_t.size()==sequence.size()  ){
+        current_energy = count_contacts_breaked(sequence, C_t, map_of_contacts, map_coordinate_to_int);
 
         q =distribution(generator);
         float probability_to_accept = exp(-(current_energy-E)/T);
@@ -812,6 +802,7 @@ void Protein::regrowth_middle(int l, int start_position){
 // проверка по сути не нужна, но мне так спокойнее
 
     if( C_t.size()==sequence.size()  ){
+        current_energy = count_contacts_breaked(sequence, C_t, map_of_contacts, map_coordinate_to_int);
 
         q =distribution(generator);
         float probability_to_accept = exp(-(current_energy-E)/T);
