@@ -95,7 +95,7 @@ Protein::Protein(std::vector<int> sequence_input ) {
             new_coordinate=std::make_pair(conformation.back().first+1, conformation.back().second);
         }
         conformation.push_back(new_coordinate);
-        conformation_int.push_back(lattice.map_coordinate_to_int[new_coordinate]);
+        //conformation_int.push_back(lattice.map_coordinate_to_int[new_coordinate]);
     }
     E = count_contacts();
     min_E = E; //сохраняем минимальное найденное значение
@@ -122,7 +122,7 @@ int Protein::count_contacts(){
     int hh = 0;
     int position;
     for (int i =1; i<sequence.size()-1; i++){
-        for ( coord_t step : lattice.map_of_contacts[lattice.map_coordinate_to_int[conformation[i]]] ){
+        for ( coord_t step : lattice.get_contacts(conformation[i]) ){
             if ( step!=conformation[i-1] && step!=conformation[i+1] && std::find(conformation.begin(), conformation.end(), step) !=conformation.end()  ){
                 position=std::distance(conformation.begin(),find(conformation.begin(), conformation.end(), step));
                 hh=hh+sequence[i]*sequence[position];
@@ -130,14 +130,14 @@ int Protein::count_contacts(){
         }
     }
     //концы конформации обрабатываются отдельно
-    for ( coord_t step : lattice.map_of_contacts[lattice.map_coordinate_to_int[conformation[0]]] ) {
+    for ( coord_t step : lattice.get_contacts(conformation[0]) ) {
         if (step != conformation[1] &&
             std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
             position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
             hh = hh + sequence.front() * sequence[position];
         }
     }
-    for ( coord_t step : lattice.map_of_contacts[lattice.map_coordinate_to_int[conformation.back()]] ){
+    for ( coord_t step : lattice.get_contacts(conformation.back()) ){
         if ( step!=conformation[conformation.size()-2]  && std::find(conformation.begin(), conformation.end(), step) !=conformation.end()  ){
             position=std::distance(conformation.begin(),find(conformation.begin(), conformation.end(), step));
             hh=hh+sequence.back()*sequence[position];
@@ -168,7 +168,7 @@ void Protein::regrowth_end(int l ){
     seq_t.reserve(sequence.size());
     seq_t.resize(sequence.size()-l);
     std::copy(sequence.begin(), sequence.begin()+sequence.size()-l, seq_t.begin());
-    int current_energy = dissected(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int);
+    int current_energy = dissected(seq_t, C_t );
     int temp_e;
     static std::vector<std::pair<float, int>> probabilities_to_move;
     probabilities_to_move.resize(4, std::make_pair(0.0, 0));
@@ -178,7 +178,7 @@ void Protein::regrowth_end(int l ){
     seq_t.emplace_back( sequence[sequence.size()-l]);
     for (int i =0; i<lattice.ndim2(); i++ ){
         //проверка на самопересечения + проверка первого шага, чтобы не начать строить в том же направлении, что и в старой конформации
-        if (lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t.back()]][i] == conformation[sequence.size()-l] ||  std::find(C_t.begin(), C_t.end(), lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t.back()]][i]   )!=C_t.end()  ){
+        if (lattice.get_contacts(C_t.back())[i] == conformation[sequence.size()-l] ||  std::find(C_t.begin(), C_t.end(), lattice.get_contacts(C_t.back())[i]   )!=C_t.end()  ){
             //так как точка не подходит, то вероятность попасть в нее равна нулю
             probabilities_to_move[i] = std::make_pair(0.0, i);
             energies[i] = 0;//strange, but it for time economy
@@ -187,8 +187,8 @@ void Protein::regrowth_end(int l ){
         else{
             //точка подходит
             //текущая  функция энергия должна работать корректно
-            C_t.emplace_back(lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t.back()]][i]);
-            temp_e = count_contacts_dissected_t(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int, sequence.size() - l,
+            C_t.emplace_back(lattice.get_contacts(C_t.back())[i]);
+            temp_e = count_contacts_dissected_t(seq_t, C_t,  sequence.size() - l,
                                                 current_energy);
             energies[i] = temp_e;
             probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
@@ -216,7 +216,7 @@ void Protein::regrowth_end(int l ){
     for (int i =0; i<lattice.ndim2(); i++ ){
         //забираем соответствующую координату
         if (q<probabilities_to_move[i].first){
-            C_t.emplace_back( lattice.map_of_contacts[lattice.map_coordinate_to_int[ C_t.back()  ]][probabilities_to_move[i].second]  );
+            C_t.emplace_back( lattice.get_contacts(C_t.back())[probabilities_to_move[i].second]  );
             current_energy = energies[probabilities_to_move[i].second];
             break;
         }
@@ -227,9 +227,9 @@ void Protein::regrowth_end(int l ){
         sum_probabilities = 0.0;
         for (int i =0; i<lattice.ndim2(); i++ ){
             // тут проверка только на самопересечения
-            if(std::find(C_t.begin(), C_t.end(), lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t.back()]][i])==C_t.end() ){
-                C_t.emplace_back(lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t.back()]][i]);
-                temp_e = count_contacts_dissected_t(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int, t,
+            if(std::find(C_t.begin(), C_t.end(),lattice.get_contacts(C_t.back())[i])==C_t.end() ){
+                C_t.emplace_back(lattice.get_contacts(C_t.back())[i]);
+                temp_e = count_contacts_dissected_t(seq_t, C_t, t,
                                                     current_energy);
                 energies[i] = temp_e;
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
@@ -255,7 +255,7 @@ void Protein::regrowth_end(int l ){
         q = distribution(generator);
         for (int i =0; i<lattice.ndim2(); i++ ){
             if (q<probabilities_to_move[i].first){
-                C_t.emplace_back(lattice.map_of_contacts[lattice.map_coordinate_to_int[ C_t.back()  ]][probabilities_to_move[i].second]  );
+                C_t.emplace_back(lattice.get_contacts(C_t.back())[probabilities_to_move[i].second]  );
                 current_energy = energies[probabilities_to_move[i].second];
                 break;
             }
@@ -264,7 +264,7 @@ void Protein::regrowth_end(int l ){
 // дополнительная проверка, что раз мы дошли до этой части, участок нужной длины достроен
 // по сути не нужно проверять, но мне так спокойнее
     if( C_t.size()==sequence.size()  ){
-        current_energy = dissected(sequence, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int); // пересчет
+        current_energy = dissected(sequence, C_t); // пересчет
         q =distribution(generator);
         //это как раз вероятность, с которой будет приниматься новая конфромация
         // в оригинале это p=min( 1,   exp(..)  )
@@ -312,7 +312,7 @@ void Protein::regrowth_start(int l ) {
     seq_t.reserve(sequence.size());
     seq_t.resize(sequence.size()-l);
     std::copy(sequence.begin()+l, sequence.end(), seq_t.begin());
-    int current_energy = dissected(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int);
+    int current_energy = dissected(seq_t, C_t);
     int temp_e;
     static std::vector <std::pair<float, int>> probabilities_to_move;
     probabilities_to_move.resize(4, std::make_pair(0.0, 0));
@@ -322,7 +322,7 @@ void Protein::regrowth_start(int l ) {
     seq_t.insert(seq_t.begin(), sequence[l-1]);
     for (int i =0; i<lattice.ndim2(); i++ ){
         //убираю вариант старой точки и самопересечения
-        if (lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[0]]][i] == conformation[l-1] ||  std::find(C_t.begin(), C_t.end(), lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[0]]][i]   )!=C_t.end()  ){
+        if (lattice.get_contacts(C_t[0])[i] == conformation[l-1] ||  std::find(C_t.begin(), C_t.end(), lattice.get_contacts(C_t[0])[i]   )!=C_t.end()  ){
             probabilities_to_move[i] = std::make_pair(0.0, i);
             energies[i] = 0;//strange, but it for time economy
             continue;
@@ -330,8 +330,8 @@ void Protein::regrowth_start(int l ) {
         else{
             //точка подходит
             // Лучше потом переделать функцию для энергии
-            C_t.insert(C_t.begin(),lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[0]]][i]  );
-            temp_e = count_contacts_dissected_t(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int, 0, current_energy);
+            C_t.insert(C_t.begin(), lattice.get_contacts(C_t[0])[i]  );
+            temp_e = count_contacts_dissected_t(seq_t, C_t,   0, current_energy);
             energies[i] = temp_e;
             probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
             C_t.erase(C_t.begin());
@@ -354,7 +354,7 @@ void Protein::regrowth_start(int l ) {
     double q = distribution(generator);
     for (int i =0; i<lattice.ndim2(); i++ ){
         if (q<probabilities_to_move[i].first){
-            C_t.insert(C_t.begin(),lattice.map_of_contacts[lattice.map_coordinate_to_int[ C_t[0]  ]][probabilities_to_move[i].second]  );
+            C_t.insert(C_t.begin(),lattice.get_contacts(C_t[0])[probabilities_to_move[i].second]  );
             current_energy = energies[probabilities_to_move[i].second];
             break;
         }
@@ -363,9 +363,9 @@ void Protein::regrowth_start(int l ) {
         seq_t.insert(seq_t.begin(), sequence[t]);
         sum_probabilities = 0.0;
         for (int i =0; i<lattice.ndim2(); i++ ){
-            if(std::find(C_t.begin(), C_t.end(), lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[0]]][i])==C_t.end() ){
-                C_t.insert(C_t.begin(),lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[0]]][i]  );
-                temp_e = count_contacts_dissected_t(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int, 0,
+            if(std::find(C_t.begin(), C_t.end(), lattice.get_contacts(C_t[0])[i])==C_t.end() ){
+                C_t.insert(C_t.begin(),lattice.get_contacts(C_t[0])[i]  );
+                temp_e = count_contacts_dissected_t(seq_t, C_t, 0,
                                                     current_energy);
                 energies[i] = temp_e;
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
@@ -391,14 +391,14 @@ void Protein::regrowth_start(int l ) {
         q = distribution(generator);
         for (int i =0; i<lattice.ndim2(); i++ ){
             if (q<probabilities_to_move[i].first){
-                C_t.insert(C_t.begin(),lattice.map_of_contacts[lattice.map_coordinate_to_int[ C_t[0]  ]][probabilities_to_move[i].second]  );
+                C_t.insert(C_t.begin(),lattice.get_contacts(C_t[0])[probabilities_to_move[i].second]  );
                 current_energy = energies[probabilities_to_move[i].second];
                 break;
             }
         }
     }
     if( C_t.size()==sequence.size()  ){
-        current_energy = dissected(sequence, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int);
+        current_energy = dissected(sequence, C_t);
         q =distribution(generator);
         float probability_to_accept = exp(-(current_energy-E)/T);
         if(q<probability_to_accept){
@@ -459,7 +459,7 @@ void Protein::regrowth_middle(int l, int start_position){
     seq_t.insert(seq_t.end(), seq_t_temp.begin(), seq_t_temp.end());
     seq_t_temp.clear();
     //это удаление куска последовательности
-    int current_energy = dissected(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int);
+    int current_energy = dissected(seq_t, C_t );
     seq_t.insert(seq_t.begin()+start_position, sequence[start_position]);
     int temp_e;
     static std::vector <std::pair<float, int>> probabilities_to_move;
@@ -469,16 +469,16 @@ void Protein::regrowth_middle(int l, int start_position){
     std::pair<int, int> point;
     float sum_probabilities=0.0;
     for (int i =0; i<lattice.ndim2(); i++ ){
-         if (lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[start_position-1]]][i] == conformation[start_position]){
+         if (lattice.get_contacts(C_t[start_position-1])[i] == conformation[start_position]){
             probabilities_to_move[i] = std::make_pair(0.0, i);
             energies[i] = 0;//strange, but it for time economy
             continue;
         }
-        else  if( std::find(C_t.begin(), C_t.end(), lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[start_position-1]]][i]   )==C_t.end() && lattice.distance_lattice(lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[start_position-1]]][i], conformation[end_position+1]) <=abs(end_position+1-start_position)  ){
+        else  if( std::find(C_t.begin(), C_t.end(), lattice.get_contacts(C_t[start_position-1])[i]   )==C_t.end() && lattice.distance_lattice(lattice.get_contacts(C_t[start_position-1])[i], conformation[end_position+1]) <=abs(end_position+1-start_position)  ){
             // Лучше потом переделать функцию для энергии
-            C_t.insert(C_t.begin()+start_position,lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[start_position-1]]][i]  );
+            C_t.insert(C_t.begin()+start_position,lattice.get_contacts(C_t[start_position-1])[i]  );
             //temp_e = dissected(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
-            energies[i] = count_contacts_dissected_t(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int, start_position,
+            energies[i] = count_contacts_dissected_t(seq_t, C_t,  start_position,
                                                      current_energy);
              probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
             C_t.erase(C_t.begin()+start_position);
@@ -505,7 +505,7 @@ void Protein::regrowth_middle(int l, int start_position){
     double q = distribution(generator);
     for (int i =0; i<lattice.ndim2(); i++ ){
         if (q<probabilities_to_move[i].first){
-            C_t.insert(C_t.begin()+start_position,lattice.map_of_contacts[lattice.map_coordinate_to_int[ C_t[start_position-1]  ]][probabilities_to_move[i].second]  );
+            C_t.insert(C_t.begin()+start_position,lattice.get_contacts(C_t[start_position-1])[probabilities_to_move[i].second]  );
             current_energy = energies[probabilities_to_move[i].second];
             break;
         }
@@ -514,9 +514,9 @@ void Protein::regrowth_middle(int l, int start_position){
         seq_t.insert(seq_t.begin()+t, sequence[t]);
         sum_probabilities = 0.0;
         for (int i =0; i<lattice.ndim2(); i++ ){
-            if(std::find(C_t.begin(), C_t.end(), lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[t-1]]][i])==C_t.end() &&  lattice.distance_lattice( lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[t-1]]][i] ,conformation[end_position+1] )<=abs(end_position+1-t)){
-                C_t.insert(C_t.begin()+t,lattice.map_of_contacts[lattice.map_coordinate_to_int[C_t[t-1]]][i]  );
-                temp_e = count_contacts_dissected_t(seq_t, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int, t,
+            if(std::find(C_t.begin(), C_t.end(), lattice.get_contacts(C_t[t-1])[i])==C_t.end() &&  lattice.distance_lattice( lattice.get_contacts(C_t[t-1])[i] ,conformation[end_position+1] )<=abs(end_position+1-t)){
+                C_t.insert(C_t.begin()+t,lattice.get_contacts(C_t[t-1])[i]  );
+                temp_e = count_contacts_dissected_t(seq_t, C_t,  t,
                                                     current_energy);
                 energies[i] = temp_e;
                 probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
@@ -542,7 +542,7 @@ void Protein::regrowth_middle(int l, int start_position){
         q = distribution(generator);
         for (int i =0; i<lattice.ndim2(); i++ ){
             if (q<probabilities_to_move[i].first){
-                C_t.insert(C_t.begin()+t,lattice.map_of_contacts[lattice.map_coordinate_to_int[ C_t[t-1]  ]][probabilities_to_move[i].second]  );
+                C_t.insert(C_t.begin()+t,lattice.get_contacts(C_t[t-1])[probabilities_to_move[i].second]  );
                 current_energy = energies[probabilities_to_move[i].second];
                 break;
             }
@@ -550,7 +550,7 @@ void Protein::regrowth_middle(int l, int start_position){
     }
 // проверка по сути не нужна, но мне так спокойнее
     if( C_t.size()==sequence.size()  ){
-        current_energy = dissected(sequence, C_t, lattice.map_of_contacts, lattice.map_coordinate_to_int);
+        current_energy = dissected(sequence, C_t );
         q =distribution(generator);
         float probability_to_accept = exp(-(current_energy-E)/T);
         if(q<probability_to_accept){
@@ -630,14 +630,12 @@ void Protein::find_minimum() {
 };
 
 
-int Protein::count_contacts_dissected_t(Sequence_t &sequence, Conformation_t &conformation,
-                                        contact_map_t &map_of_contacts,
-                                        Map_coordinate_to_int &map_coordinate_to_int, int t,
+int Protein::count_contacts_dissected_t(Sequence_t &sequence, Conformation_t &conformation, int t,
                                         int current_energy) {
     int new_energy = current_energy;
     int position;
     if(t!=0 && t!=sequence.size()-1){
-        for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[t]]]) {
+        for (std::pair<int, int> step : lattice.get_contacts(conformation[t])) {
             if (step != conformation[t - 1] && step != conformation[t + 1] &&
                 std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
                 position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
@@ -646,7 +644,7 @@ int Protein::count_contacts_dissected_t(Sequence_t &sequence, Conformation_t &co
         }
     }
     else if(t==0){
-        for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[0]]]) {
+        for (std::pair<int, int> step : lattice.get_contacts(conformation[0])) {
             if (  step != conformation[  1] &&
                 std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
                 position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
@@ -655,7 +653,7 @@ int Protein::count_contacts_dissected_t(Sequence_t &sequence, Conformation_t &co
         }
     }
     else{
-        for (std::pair<int, int> step : map_of_contacts[map_coordinate_to_int[conformation[t]]]) {
+        for (std::pair<int, int> step : lattice.get_contacts(conformation[t])) {
             if (step != conformation[conformation.size()-2]  &&
                 std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
                 position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
@@ -666,32 +664,30 @@ int Protein::count_contacts_dissected_t(Sequence_t &sequence, Conformation_t &co
     return new_energy ;
 }
 
-int dissected(Sequence_t &sequence, Conformation_t &conformation,
-              contact_map_t &map_of_contacts,
-              Map_coordinate_to_int &map_coordinate_to_int) {
+int Protein::dissected(Sequence_t &sequence1, Conformation_t &conformation1) {
     int hh = 0;
     int position;
-    for (int i = 1; i < sequence.size()-1; i++) {
-        for (coord_t step : map_of_contacts[map_coordinate_to_int[conformation[i]]]) {
-            if (step != conformation[i - 1] && step != conformation[i + 1] &&
-                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
-                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-                hh = hh + sequence[i] * sequence[position];
+    for (int i = 1; i < sequence1.size()-1; i++) {
+        for (coord_t step : lattice.get_contacts(conformation1[i])) {
+            if (step != conformation1[i - 1] && step != conformation1[i + 1] &&
+                std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
+                position = std::distance(conformation1.begin(), find(conformation1.begin(), conformation1.end(), step));
+                hh = hh + sequence1[i] * sequence1[position];
             }
         }
     }
-    for (coord_t step : map_of_contacts[map_coordinate_to_int[conformation[0]]]) {
-        if (step != conformation[1] &&
-            std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
-            position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-            hh = hh + sequence[0] * sequence[position];
+    for (coord_t step : lattice.get_contacts(conformation1[0])) {
+        if (step != conformation1[1] &&
+            std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
+            position = std::distance(conformation1.begin(), find(conformation1.begin(), conformation1.end(), step));
+            hh = hh + sequence1[0] * sequence1[position];
         }
     }
-    for (coord_t step : map_of_contacts[map_coordinate_to_int[conformation.back()]]) {
-        if (step != conformation[conformation.size() - 2] &&
-            std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
-            position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-            hh = hh + sequence.back() * sequence[position];
+    for (coord_t step : lattice.get_contacts(conformation1.back())) {
+        if (step != conformation1[conformation1.size() - 2] &&
+            std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
+            position = std::distance(conformation1.begin(), find(conformation1.begin(), conformation1.end(), step));
+            hh = hh + sequence1.back() * sequence1[position];
         }
     }
     return (-1 * div(hh, 2).quot);
