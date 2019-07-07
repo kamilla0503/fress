@@ -15,9 +15,10 @@
 #include <map>
 #include <math.h>
 
-typedef std::vector<int> Sequence_t, Sequence;
-typedef std::pair<int, int> coord_t;
-typedef std::vector<coord_t> Conformation_t, Conformation;
+//typedef std::vector<int> Sequence_t, Sequence;
+//typedef std::pair<int, int> coord_t;
+typedef int coord_t;
+//typedef std::vector<coord_t> Conformation_t, Conformation;
 typedef std::map<int, std::vector<coord_t>>  contact_map_t ;
 typedef std::map<coord_t, int>  Map_coordinate_to_int ;
 
@@ -29,6 +30,7 @@ public:
     int ndim() { return 2; }
     int ndim2() {return 4;}
     int lattice_side;
+    std::map<int, std::vector<int>> map_of_contacts_int;
     //contact_map_t map_of_contacts;
     //std:: map<int, std::pair<int, int>> map_int_to_coordinate;
     //Map_coordinate_to_int map_coordinate_to_int; //словарь для хранения всех соседей
@@ -39,7 +41,8 @@ public:
     int distance_lattice(coord_t point1, coord_t point2);
 
     inline std::vector<coord_t> get_contacts(coord_t point){
-        return map_of_contacts[map_coordinate_to_int[point]];
+       // return map_of_contacts[map_coordinate_to_int[point]];
+       return map_of_contacts_int[point];
     }
 
 private:
@@ -51,6 +54,10 @@ private:
 
 class Protein{
 public:
+
+    typedef std::vector<int> Sequence_t, Sequence;
+    typedef std::vector<coord_t> Conformation_t, Conformation;
+
     Sequence sequence;
    // int number_of_iterations;
     int E; // энергия текущей конформации
