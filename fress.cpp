@@ -12,27 +12,7 @@ Lattice::Lattice(int seq_size ) {
     lattice_side = seq_size+3;
     int l_s = seq_size+2; //чтобы было точно достатчно места при граничных условия для тора
     //создается словарь, в котором ключ - номер точки на квардатной решетке
-    // значения - координаты четырех соседних точек
-    /**for (int i=0; i<=l_s ; i++) {
-        for (int j=0; j<=l_s ; j++){
-            map_of_contacts[i*(l_s+1) +j] = { std::make_pair( j-1, i),std::make_pair(j+1, i ), std::make_pair(j, i-1), std::make_pair( j, i+1)         };
-            //for (std::pair<int, int> c : map_of_contacts[i*l_s+j] ){
-            for (int c=0; c<  map_of_contacts[i*l_s +j].size(); c++ ){
-                if(map_of_contacts[i*(l_s+1) +j][c].first>l_s){
-                    map_of_contacts[i*(l_s+1) +j][c].first = 0;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].second>l_s){
-                    map_of_contacts[i*(l_s+1) +j][c].second = 0;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].second<0){
-                    map_of_contacts[i*(l_s+1) +j][c].second = l_s;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].first<0){
-                    map_of_contacts[i*(l_s+1) +j][c].first = l_s;
-                }
-            }
-        }
-    }**/
+    // значения - номера четырех соседних точек
     int x, y;
     div_t n;
     for (int i =0; i<(l_s+1)*(l_s+1); i++){
@@ -70,27 +50,7 @@ void Lattice::create_lattice(int seq_size){
     lattice_side = seq_size+3;
     int l_s = seq_size+2; //чтобы было точно достатчно места при граничных условия для тора
     //создается словарь, в котором ключ - номер точки на квардатной решетке
-    // значения - координаты четырех соседних точек
-    /**for (int i=0; i<=l_s ; i++) {
-        for (int j=0; j<=l_s ; j++){
-            map_of_contacts[i*(l_s+1) +j] = { std::make_pair( j-1, i),std::make_pair(j+1, i ), std::make_pair(j, i-1), std::make_pair( j, i+1)         };
-            //for (std::pair<int, int> c : map_of_contacts[i*l_s+j] ){
-            for (int c=0; c<  map_of_contacts[i*l_s +j].size(); c++ ){
-                if(map_of_contacts[i*(l_s+1) +j][c].first>l_s){
-                    map_of_contacts[i*(l_s+1) +j][c].first = 0;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].second>l_s){
-                    map_of_contacts[i*(l_s+1) +j][c].second = 0;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].second<0){
-                    map_of_contacts[i*(l_s+1) +j][c].second = l_s;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].first<0){
-                    map_of_contacts[i*(l_s+1) +j][c].first = l_s;
-                }
-            }
-        }
-    }**/
+    // значения - номера четырех соседних точек
     int x, y;
     div_t n;
     for (int i =0; i<(l_s+1)*(l_s+1); i++){
@@ -128,44 +88,6 @@ void Lattice::create_lattice(int seq_size){
 
 }
 
-/**
-void Lattice::create_lattice(int seq_size) {
-    lattice_side = seq_size+3;
-    int l_s = seq_size+2; //чтобы было точно достатчно места при граничных условия для тора
-    //создается словарь, в котором ключ - номер точки на квардатной решетке
-    // значения - координаты четырех соседних точек
-    for (int i=0; i<=l_s ; i++) {
-        for (int j=0; j<=l_s ; j++){
-            map_of_contacts[i*(l_s+1) +j] = { std::make_pair( j-1, i),std::make_pair(j+1, i ), std::make_pair(j, i-1), std::make_pair( j, i+1)         };
-            //for (std::pair<int, int> c : map_of_contacts[i*l_s+j] ){
-            for (int c=0; c<  map_of_contacts[i*l_s +j].size(); c++ ){
-                if(map_of_contacts[i*(l_s+1) +j][c].first>l_s){
-                    map_of_contacts[i*(l_s+1) +j][c].first = 0;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].second>l_s){
-                    map_of_contacts[i*(l_s+1) +j][c].second = 0;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].second<0){
-                    map_of_contacts[i*(l_s+1) +j][c].second = l_s;
-                }
-                if(map_of_contacts[i*(l_s+1) +j][c].first<0){
-                    map_of_contacts[i*(l_s+1) +j][c].first = l_s;
-                }
-            }
-        }
-    }
-    int x, y;
-    div_t n;
-    int real_size = l_s+1;
-    for (int i =0; i<real_size*real_size; i++){
-        n=div(i, real_size);
-        x=n.rem;
-        y=n.quot;
-        map_int_to_coordinate[i]=std::make_pair(i%(l_s+1), i /(l_s+1)  );
-        map_coordinate_to_int[map_int_to_coordinate[i]] = i;
-    }
-}**/
-
 Protein::Protein(){};
 
 Protein::Protein(std::vector<int> sequence_input ) {
@@ -180,15 +102,6 @@ Protein::Protein(std::vector<int> sequence_input ) {
     //conformation_int.push_back(0);
     std::pair <int, int> new_coordinate;
     for (int i=0; i<sequence.size(); i++){
-        /**if (i%8>0 && i%8<lattice.ndim2()) {
-            new_coordinate=std::make_pair(conformation.back().first, conformation.back().second+1);
-        }
-        else if (i%8>lattice.ndim2() && i%8<=7){
-            new_coordinate=std::make_pair(conformation.back().first, conformation.back().second-1);
-        }
-        else{
-            new_coordinate=std::make_pair(conformation.back().first+1, conformation.back().second);
-        }**/
         conformation.push_back(i);
         //conformation_int.push_back(lattice.map_coordinate_to_int[new_coordinate]);
     }
