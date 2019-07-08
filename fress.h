@@ -20,7 +20,7 @@ typedef int coord_t;
 class Lattice{
 
 public:
-    
+
     int ndim() { return 2; }
     int ndim2() {return 4;}
     int lattice_side;
