@@ -3,7 +3,7 @@
 #include "fress.h"
 using namespace std;
 
-int main(int argc, char *argv[]) { 
+int main(int argc, char *argv[]) {
     cout.precision(3);
 
   string filename, hp_sequence;
@@ -24,6 +24,11 @@ int main(int argc, char *argv[]) {
     }
     cout << "length is " << sequence.size() << endl;
 
+    
+    
+    
+    
+    
 
 
 Protein p(sequence);
