@@ -631,7 +631,7 @@ void Protein::find_minimum() {
         if(iteration%10000==0){
             std::cout << "Number of attempts :  " << iteration<< std::endl;
         }
-        if(min_E==-14){
+        if(min_E==-9){
             std::cout << "-9 achieved! " << std:: endl;
             break;
         }
@@ -644,7 +644,7 @@ int Protein::count_contacts_dissected_t(Sequence_t &sequence1, Conformation_t &c
                                         int current_energy) {
     int new_energy = current_energy;
     int position;
-    if(t!=0 && t!=sequence.size()-1){
+    if(t!=0 && t!=sequence1.size()-1){
         for (coord_t step : lattice.get_contacts(conformation1[t])) {
             if (step != conformation1[t - 1] && step != conformation1[t + 1] &&
                 std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
