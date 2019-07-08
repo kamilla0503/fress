@@ -97,13 +97,8 @@ Protein::Protein(std::vector<int> sequence_input ) {
     change_T=false;
     calculate_probabilities_for_l();
    lattice.create_lattice(sequence.size());
-// push_back or emplace_back?
-    //conformation.emplace_back(std::make_pair(0, 0));
-    //conformation_int.push_back(0);
-    std::pair <int, int> new_coordinate;
     for (int i=0; i<sequence.size(); i++){
         conformation.push_back(i);
-        //conformation_int.push_back(lattice.map_coordinate_to_int[new_coordinate]);
     }
     E = count_contacts();
     min_E = E; //сохраняем минимальное найденное значение
@@ -484,13 +479,13 @@ void Protein::regrowth_middle(int l, int start_position){
     for (int i =0; i<lattice.ndim2(); i++ ){
          if (lattice.get_contacts(C_t[start_position-1])[i] == conformation[start_position]){
             probabilities_to_move[i] = std::make_pair(0.0, i);
-            energies[i] = 0;//strange, but it for time economy
+            energies[i] = 0;//strange, but it is for time economy
             continue;
         }
         else  if( std::find(C_t.begin(), C_t.end(), lattice.get_contacts(C_t[start_position-1])[i]   )==C_t.end() && lattice.distance_lattice(lattice.get_contacts(C_t[start_position-1])[i], conformation[end_position+1]) <=abs(end_position+1-start_position)  ){
             // Лучше потом переделать функцию для энергии
             C_t.insert(C_t.begin()+start_position,lattice.get_contacts(C_t[start_position-1])[i]  );
-            //temp_e = dissected(seq_t, C_t, map_of_contacts,map_coordinate_to_int);
+
             energies[i] = count_contacts_dissected_t(seq_t, C_t,  start_position,
                                                      current_energy);
              probabilities_to_move[i] = std::make_pair( exp(-(temp_e-current_energy)/T), i);
@@ -636,7 +631,7 @@ void Protein::find_minimum() {
         if(iteration%10000==0){
             std::cout << "Number of attempts :  " << iteration<< std::endl;
         }
-        if(min_E==-9){
+        if(min_E==-14){
             std::cout << "-9 achieved! " << std:: endl;
             break;
         }
@@ -645,34 +640,34 @@ void Protein::find_minimum() {
 };
 
 
-int Protein::count_contacts_dissected_t(Sequence_t &sequence, Conformation_t &conformation, int t,
+int Protein::count_contacts_dissected_t(Sequence_t &sequence1, Conformation_t &conformation1, int t,
                                         int current_energy) {
     int new_energy = current_energy;
     int position;
     if(t!=0 && t!=sequence.size()-1){
-        for (coord_t step : lattice.get_contacts(conformation[t])) {
-            if (step != conformation[t - 1] && step != conformation[t + 1] &&
-                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
-                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-                new_energy = new_energy - sequence[t] * sequence[position];
+        for (coord_t step : lattice.get_contacts(conformation1[t])) {
+            if (step != conformation1[t - 1] && step != conformation1[t + 1] &&
+                std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
+                position = std::distance(conformation1.begin(), find(conformation1.begin(), conformation1.end(), step));
+                new_energy = new_energy - sequence1[t] * sequence1[position];
             }
         }
     }
     else if(t==0){
-        for (coord_t step : lattice.get_contacts(conformation[0])) {
-            if (  step != conformation[  1] &&
-                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
-                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-                new_energy = new_energy - sequence[0] * sequence[position];
+        for (coord_t step : lattice.get_contacts(conformation1[0])) {
+            if (  step != conformation1[  1] &&
+                std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
+                position = std::distance(conformation1.begin(), find(conformation1.begin(), conformation1.end(), step));
+                new_energy = new_energy - sequence1[0] * sequence1[position];
             }
         }
     }
     else{
-        for (coord_t step : lattice.get_contacts(conformation[t])) {
-            if (step != conformation[conformation.size()-2]  &&
-                std::find(conformation.begin(), conformation.end(), step) != conformation.end()) {
-                position = std::distance(conformation.begin(), find(conformation.begin(), conformation.end(), step));
-                new_energy = new_energy - sequence[t] * sequence[position];
+        for (coord_t step : lattice.get_contacts(conformation1[t])) {
+            if (step != conformation1[conformation1.size()-2]  &&
+                std::find(conformation1.begin(), conformation1.end(), step) != conformation1.end()) {
+                position = std::distance(conformation1.begin(), find(conformation1.begin(), conformation1.end(), step));
+                new_energy = new_energy - sequence1[t] * sequence1[position];
             }
         }
     }
