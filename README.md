@@ -14,3 +14,5 @@ Input file should have string consisting of characters ‘P’ and ‘H’.
 # References
 
 [1]. Z.  Jinfeng,  S.  Kou,  J.  Liu. Biopolymer  Structure  Simulation  and Optimization via Fragment Regrowth Monte Carlo. Journal of Chemical Physics, 126(22), 225101 (2007)
+
+![alt text](https://zenodo.org/badge/187543434.svg)
